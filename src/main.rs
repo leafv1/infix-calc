@@ -51,7 +51,7 @@ impl Token {
         s = s.trim_start();
 
         if let Ok((x, n)) = fast_float::parse_partial::<f64, _>(s) {
-            return (Self::Num(x), &s[n..]);
+            return (Self::Num(x), &s[n..])
         }
 
         let t = match s.chars().next() {
@@ -63,7 +63,7 @@ impl Token {
                 '*' => Self::Op(Op::Mul),
                 '/' => Self::Op(Op::Div),
                 '^' => Self::Op(Op::Exp),
-                _ => return (Self::Invalid, s)
+                _ => return (Self::Invalid, s),
             },
             None => return (Self::Empty, s)
         };
@@ -73,6 +73,7 @@ impl Token {
 }
 
 /*-----------------------------*/
+
 struct Pair {
     num: f64,
     op: Option<Op>
@@ -84,18 +85,18 @@ impl Pair {
     }
 }
 
-struct Base {
-    idx: usize,
+struct Group {
+    base: usize,
     parens: u32
 }
 
 fn solve(mut s: &str) -> Result<f64, ()> {
     let mut pairs: Vec<Pair> = Vec::new();
-    let mut bases: Vec<Base> = Vec::new();
+    let mut groups: Vec<Group> = Vec::new();
 
     let mut r = Pair::sentinel();
 
-    let mut base = Base { idx: 0, parens: 1 };
+    let mut group = Group { base: 0, parens: 1 };
 
     'advance: loop {
         let mut t;
@@ -132,9 +133,9 @@ fn solve(mut s: &str) -> Result<f64, ()> {
 
         if nopen > 0 {
             pairs.push(l);
-            bases.push(base);
+            groups.push(group);
 
-            base = Base { idx: pairs.len(), parens: nopen };
+            group = Group { base: pairs.len(), parens: nopen };
             l = Pair::sentinel();
         }
 
@@ -142,34 +143,37 @@ fn solve(mut s: &str) -> Result<f64, ()> {
             if let (true, Some(rop)) = (nclose == 0, r.op) {
                 if rop.higher(&l.op.unwrap()) {
                     pairs.push(l);
-                    continue 'advance;
+                    continue 'advance
                 }
             }
 
             r.num = l.op.unwrap().perform(l.num, r.num);
 
             loop {
-                if pairs.len() > base.idx {
+                if pairs.len() > group.base {
                     l = pairs.pop().unwrap();
-                    continue 'fold;
+                    continue 'fold
                 }
 
-                while base.parens > 0 {
+                while group.parens > 0 {
                     if nclose == 0 {
-                        continue 'advance;
+                        continue 'advance
                     }
 
                     nclose -= 1;
-                    base.parens -= 1;
+                    group.parens -= 1;
                 }
 
-                base = if let Some(b) = bases.pop() { b } else {
-                    break 'advance (
+                group = match groups.pop() {
+                    Some(g) => g,
+                    None => break 'advance (
                         if let (true, Token::Empty) = (nclose == 0, t) {
                             Ok(r.num)
-                        } else { Err(()) }
+                        } else {
+                            Err(())
+                        }
                     )
-                };
+                }
             }
         }
     }
