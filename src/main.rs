@@ -188,5 +188,8 @@ fn main() {
 
     let exp = &std::env::args().nth(1).unwrap_or(test_str.to_string());
 
-    println!("{}", solve(exp).expect("solve failed"));
+    match solve(exp) {
+        Ok(res) => println!("{res}"),
+        Err(_) => eprintln!("error calculating"),
+    }
 }
