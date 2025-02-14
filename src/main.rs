@@ -140,11 +140,9 @@ fn solve(mut s: &str) -> Result<f64, ()> {
         }
 
         'fold: loop {
-            if let (true, Some(rop)) = (nclose == 0, r.op) {
-                if rop.higher(&l.op.unwrap()) {
-                    pairs.push(l);
-                    continue 'advance
-                }
+            if nclose == 0 && r.op.unwrap().higher(&l.op.unwrap()) {
+                pairs.push(l);
+                continue 'advance
             }
 
             r.num = l.op.unwrap().perform(l.num, r.num);
